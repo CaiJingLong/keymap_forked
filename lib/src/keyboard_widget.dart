@@ -84,8 +84,10 @@ class KeyboardWidgetState extends State<KeyboardWidget> {
   static const Color shadow = Color(0x55000000);
   static const Color defaultTextColor = Colors.white;
 
-  static const TextStyle defaultTextStyle =
-      TextStyle(color: defaultTextColor, fontSize: 12);
+  static const TextStyle defaultTextStyle = TextStyle(
+    color: defaultTextColor,
+    fontSize: 12,
+  );
 
   @override
   void initState() {
@@ -117,14 +119,14 @@ class KeyboardWidgetState extends State<KeyboardWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-          color: invert ? color : color2,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color)),
-      child: Text(text,
-          style: _textStyle.copyWith(
-              color: invert
-                  ? color2
-                  : color)), //isDark? _whiteStyle :_blackStyle,),
+        color: invert ? color : color2,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        text,
+        style: _textStyle.copyWith(color: invert ? color2 : color),
+      ), //isDark? _whiteStyle :_blackStyle,),
     );
   }
 
@@ -196,8 +198,7 @@ class KeyboardWidgetState extends State<KeyboardWidget> {
     }
     List<DataColumn> columns = [];
     for (int k = 0; k < widget.columnCount; k++) {
-      columns
-          .add(const DataColumn(label: Text('m'), numeric: true)); //right-align
+      columns.add(const DataColumn(label: Text('m'), numeric: true));
       columns.add(const DataColumn(label: Text('k')));
       columns.add(const DataColumn(label: Text('d')));
     }
@@ -208,11 +209,19 @@ class KeyboardWidgetState extends State<KeyboardWidget> {
         KeyAction rep = widget.bindings[k * widget.columnCount + t];
         String modifiers = _getModifiers(rep);
         dataRow.add(modifiers.isNotEmpty
-            ? DataCell(_getBubble(modifiers, textColor, background, _textStyle,
-                invert: true))
+            ? DataCell(
+                _getBubble(
+                  modifiers,
+                  textColor,
+                  background,
+                  _textStyle,
+                  invert: true,
+                ),
+              )
             : DataCell.empty);
         dataRow.add(
-            DataCell(_getBubble(rep.label, textColor, background, _textStyle)));
+          DataCell(_getBubble(rep.label, textColor, background, _textStyle)),
+        );
         dataRow.add(
           DataCell(
             Text(
@@ -232,16 +241,35 @@ class KeyboardWidgetState extends State<KeyboardWidget> {
         KeyAction rep = widget.bindings[k];
         String modifiers = _getModifiers(rep);
         dataRow.add(modifiers.isNotEmpty
-            ? DataCell(_getBubble(modifiers, textColor, background, _textStyle))
+            ? DataCell(
+                _getBubble(
+                  modifiers,
+                  textColor,
+                  background,
+                  _textStyle,
+                ),
+              )
             : DataCell.empty);
-        dataRow.add(DataCell(_getBubble(
-            rep.label, textColor, background, _textStyle,
-            invert: true)));
-        dataRow.add(DataCell(Text(
-          rep.description,
-          overflow: TextOverflow.ellipsis,
-          style: _textStyle,
-        )));
+        dataRow.add(
+          DataCell(
+            _getBubble(
+              rep.label,
+              textColor,
+              background,
+              _textStyle,
+              invert: true,
+            ),
+          ),
+        );
+        dataRow.add(
+          DataCell(
+            Text(
+              rep.description,
+              overflow: TextOverflow.ellipsis,
+              style: _textStyle,
+            ),
+          ),
+        );
       }
       for (int k = widget.bindings.length;
           k < rowCount * widget.columnCount;
@@ -253,25 +281,33 @@ class KeyboardWidgetState extends State<KeyboardWidget> {
     }
     List<DataRow> rows = [];
     for (List<DataCell> cells in tableRows) {
-      rows.add(DataRow(
-        cells: cells,
-      ));
+      rows.add(DataRow(cells: cells));
     }
 
+    final scrollController = ScrollController();
+
     Widget dataTable = Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: DataTable(
-          columnSpacing: 6,
-          dividerThickness: 1,
-          columns: columns,
-          rows: rows,
-          dataRowHeight: 36.0 + (_textStyle.fontSize ?? 12.0),
-          headingRowHeight: 0,
-        ));
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Scrollbar(
+        controller: scrollController,
+        child: SingleChildScrollView(
+          controller: scrollController,
+          child: DataTable(
+            columnSpacing: 6,
+            dividerThickness: 1,
+            columns: columns,
+            rows: rows,
+            dataRowHeight: 36.0 + (_textStyle.fontSize ?? 12.0),
+            headingRowHeight: 0,
+          ),
+        ),
+      ),
+    );
 
     Widget grid = Container(
       alignment: Alignment.center,
-      height: double.infinity, width: double.infinity,
+      height: double.infinity,
+      width: double.infinity,
       decoration: BoxDecoration(
           color: background,
           border: Border.all(color: background, width: 18),
@@ -285,50 +321,56 @@ class KeyboardWidgetState extends State<KeyboardWidget> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                  Expanded(
-                      child: Markdown(
-                        shrinkWrap: true,
-                        data: widget.helpText!,
-                        styleSheet: MarkdownStyleSheet(
-                          h1: const TextStyle(fontWeight: FontWeight.bold),
-                          h1Align: WrapAlignment.center,
-                        ),
-                    )
+                Expanded(
+                  child: Markdown(
+                    shrinkWrap: true,
+                    data: widget.helpText!,
+                    styleSheet: MarkdownStyleSheet(
+                      h1: const TextStyle(fontWeight: FontWeight.bold),
+                      h1Align: WrapAlignment.center,
+                    ),
                   ),
-                  const Divider(height: 1.0, thickness: 1.0),
-                  const SizedBox(height: 18,),
-                  dataTable
-                ])
+                ),
+                const Divider(height: 1.0, thickness: 1.0),
+                const SizedBox(
+                  height: 18,
+                ),
+                dataTable
+              ],
+            )
           : dataTable,
     );
 
     return OverlayEntry(builder: (context) {
       return Positioned(
-          child: GestureDetector(
-        onTap: () {
-          _hideOverlay();
-        },
-        child: Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(horizontalMargin),
-          width: size.width,
-          // - padding.left - padding.right - 40,
-          height: size.height,
-          // - padding.top - padding.bottom - 40,
-          decoration: const BoxDecoration(
-            color: Colors.black12,
-          ),
-          child: Material(
+        child: GestureDetector(
+          onTap: () {
+            _hideOverlay();
+          },
+          child: Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(horizontalMargin),
+            width: size.width,
+            // - padding.left - padding.right - 40,
+            height: size.height,
+            // - padding.top - padding.bottom - 40,
+            decoration: const BoxDecoration(
+              color: Colors.black12,
+            ),
+            child: Material(
               color: Colors.transparent,
               child: Center(
-                  child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                alignment: Alignment.center,
-                child: grid,
-              ))),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                  alignment: Alignment.center,
+                  child: grid,
+                ),
+              ),
+            ),
+          ),
         ),
-      ));
+      );
     });
   }
 
@@ -421,27 +463,42 @@ class KeyAction {
   ///[description] and [callback] method. Includes optional bool values (defaulting
   ///to false) for key modifiers for meta [isMetaPressed], shift [isShiftPressed],
   ///alt [isAltPressed]
-  KeyAction(LogicalKeyboardKey keyStroke, this.description, this.callback,
-      {bool isControlPressed = false,
-      bool isMetaPressed = false,
-      bool isShiftPressed = false,
-      bool isAltPressed = false})
-      : keyActivator = SingleActivator(keyStroke,
-            control: isControlPressed,
-            shift: isShiftPressed,
-            alt: isAltPressed,
-            meta: isMetaPressed);
+  KeyAction(
+    LogicalKeyboardKey keyStroke,
+    this.description,
+    this.callback, {
+    bool isControlPressed = false,
+    bool isMetaPressed = false,
+    bool isShiftPressed = false,
+    bool isAltPressed = false,
+  }) : keyActivator = SingleActivator(
+          keyStroke,
+          control: isControlPressed,
+          shift: isShiftPressed,
+          alt: isAltPressed,
+          meta: isMetaPressed,
+        );
 
   ///Creates a key action from the first letter of any string [string] with,
   ///[description] and [callback] method. Includes optional bool values (defaulting
   ///to false) for key modifiers for meta [isMetaPressed], shift [isShiftPressed],
   ///alt [isAltPressed]
-  KeyAction.fromString(String string, this.description, this.callback,
-  {bool isControlPressed = false, bool isMetaPressed = false, 
-  bool isShiftPressed = false, bool isAltPressed = false}) :
-    keyActivator = SingleActivator(LogicalKeyboardKey(string.toLowerCase().codeUnitAt(0)),
-    control: isControlPressed, shift: isShiftPressed, alt: isAltPressed, meta: isMetaPressed);
-      
+  KeyAction.fromString(
+    String string,
+    this.description,
+    this.callback, {
+    bool isControlPressed = false,
+    bool isMetaPressed = false,
+    bool isShiftPressed = false,
+    bool isAltPressed = false,
+  }) : keyActivator = SingleActivator(
+          LogicalKeyboardKey(string.toLowerCase().codeUnitAt(0)),
+          control: isControlPressed,
+          shift: isShiftPressed,
+          alt: isAltPressed,
+          meta: isMetaPressed,
+        );
+
   bool get isControlPressed => keyActivator.control;
 
   bool get isMetaPressed => keyActivator.meta;
